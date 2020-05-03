@@ -9,8 +9,6 @@ import pp.finki.ukim.mk.annocuda.annotations.GPUServiceProvider;
 import pp.finki.ukim.mk.annocuda.services.TestCpuService;
 import pp.finki.ukim.mk.annocuda.services.TestGpuService;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Random;
 

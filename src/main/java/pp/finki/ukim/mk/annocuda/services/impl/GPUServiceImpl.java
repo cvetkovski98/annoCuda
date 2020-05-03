@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import pp.finki.ukim.mk.annocuda.enums.OperationType;
 import pp.finki.ukim.mk.annocuda.services.GPUService;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -106,7 +104,7 @@ public class GPUServiceImpl implements GPUService {
         return null;
     }
 
-    private String getModulePath(String moduleName){
+    private String getModulePath(String moduleName) {
         return System.getProperty("user.dir") + "/src/main/java/pp/finki/ukim/mk/annocuda/kernels/executables/" + moduleName;
     }
 
