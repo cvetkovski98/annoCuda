@@ -1,4 +1,4 @@
-package pp.finki.ukim.mk.annocuda.services;
+package pp.finki.ukim.mk.annocuda.annotations;
 
 import org.springframework.stereotype.Component;
 
@@ -7,16 +7,18 @@ import java.lang.reflect.Proxy;
 
 @Component
 public class GPUServiceProvider {
+
     private final InvocationHandler invocationHandler;
 
     public GPUServiceProvider(InvocationHandler invocationHandler) {
         this.invocationHandler = invocationHandler;
     }
 
-    public GPUService getGpuServiceMethodHandler() {
-        return (GPUService) Proxy.newProxyInstance(
-                GPUService.class.getClassLoader(),
-                new Class[]{GPUService.class},
+    @SuppressWarnings("unchecked")
+    public <T> T bindWithGpuAnnotationProcessor(T _object, Class<?> _interface) {
+        return (T) Proxy.newProxyInstance(
+                _object.getClass().getClassLoader(),
+                new Class[]{_interface},
                 this.invocationHandler
         );
     }

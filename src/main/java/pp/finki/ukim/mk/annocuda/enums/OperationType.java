@@ -1,7 +1,7 @@
 package pp.finki.ukim.mk.annocuda.enums;
 
 public enum OperationType {
-    VECTOR_ADD,
+    DOT_PRODUCT,
     REDUCE,
     MAP
 }
