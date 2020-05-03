@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pp.finki.ukim.mk.annocuda.annotations.GPUServiceProvider;
+import pp.finki.ukim.mk.annocuda.services.GPUService;
 import pp.finki.ukim.mk.annocuda.services.TestCpuService;
 import pp.finki.ukim.mk.annocuda.services.TestGpuService;
 
@@ -23,9 +24,10 @@ public class EntryPointController {
 
     public EntryPointController(GPUServiceProvider gpuServiceProvider,
                                 TestGpuService testGpuService,
-                                TestCpuService testCpuService) {
+                                TestCpuService testCpuService,
+                                GPUService gpuService) {
         this.testCpuService = testCpuService;
-        this.testGpuService = gpuServiceProvider.bindWithGpuAnnotationProcessor(testGpuService, TestGpuService.class);
+        this.testGpuService = gpuServiceProvider.bindWithGpuAnnotationProcessor(testGpuService, TestGpuService.class, gpuService);
     }
 
     @GetMapping("/vectorAddCpu")

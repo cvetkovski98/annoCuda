@@ -1,18 +1,15 @@
 package pp.finki.ukim.mk.annocuda.annotations;
 
-import org.springframework.stereotype.Component;
 import pp.finki.ukim.mk.annocuda.services.GPUService;
-import pp.finki.ukim.mk.annocuda.services.TestGpuService;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
-@Component
 public class AnnotationProcessor implements InvocationHandler {
-    private final TestGpuService object;
+    private final Object object;
     private final GPUService gpuService;
 
-    public AnnotationProcessor(TestGpuService object, GPUService gpuService) {
+    public AnnotationProcessor(Object object, GPUService gpuService) {
         this.object = object;
         this.gpuService = gpuService;
     }
