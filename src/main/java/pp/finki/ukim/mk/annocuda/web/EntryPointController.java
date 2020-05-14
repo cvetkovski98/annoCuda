@@ -43,21 +43,39 @@ public class EntryPointController {
     }
 
     @GetMapping("/matMulGpu")
-    public ResponseEntity<Object[]> matrixGpu(@RequestParam long arraySize) {
-        generateRandomMatrices(arraySize);
+    public ResponseEntity<Object[]> matrixGpu(@RequestParam long x, @RequestParam long y) {
+        generateRandomMatrices(x, y);
         long t1 = System.currentTimeMillis();
         Object p = testService.gpuMatrixMultiplication(mat1, mat2);
         long time = System.currentTimeMillis() - t1;
-        return ResponseEntity.ok(new Object[]{time});
+        return ResponseEntity.ok(new Object[]{time, p});
     }
 
     @GetMapping("/matMulCpu")
-    public ResponseEntity<Object[]> matrixCpu(@RequestParam long arraySize) {
-        generateRandomMatrices(arraySize);
+    public ResponseEntity<Object[]> matrixCpu(@RequestParam long x, @RequestParam long y) {
+        generateRandomMatrices(x, y);
         long t1 = System.currentTimeMillis();
         Object p = testService.cpuMatrixMultiplication(mat1, mat2);
         long time = System.currentTimeMillis() - t1;
         return ResponseEntity.ok(new Object[]{time});
+    }
+
+    @GetMapping("/reduceCpu")
+    public ResponseEntity<Object[]> reduceCpu(@RequestParam long arraySize) {
+        generateRandomArrays(arraySize);
+        long t1 = System.currentTimeMillis();
+        Object p = testService.cpuReduce(arr1);
+        long time = System.currentTimeMillis() - t1;
+        return ResponseEntity.ok(new Object[]{time, p});
+    }
+
+    @GetMapping("/reduceGpu")
+    public ResponseEntity<Object[]> reduceGpu(@RequestParam long arraySize) {
+        generateRandomArrays(arraySize);
+        long t1 = System.currentTimeMillis();
+        Object p = testService.gpuReduce(arr1);
+        long time = System.currentTimeMillis() - t1;
+        return ResponseEntity.ok(new Object[]{time, p});
     }
 
     private void generateRandomArrays(long arraySize) {
@@ -75,20 +93,20 @@ public class EntryPointController {
         }
     }
 
-    private void generateRandomMatrices(long arraySize) {
-        if (mat1 != null && mat2 != null && arraySize == mat1.length) {
+    private void generateRandomMatrices(long x, long y) {
+        if (mat1 != null && mat2 != null && x == mat1.length) {
             return;
         }
         int rangeMin = 1;
         int rangeMax = 10;
-        mat1 = new double[Math.toIntExact(arraySize)][Math.toIntExact(arraySize)];
-        mat2 = new double[Math.toIntExact(arraySize)][Math.toIntExact(arraySize)];
+        mat1 = new double[Math.toIntExact(x)][Math.toIntExact(y)];
+        mat2 = new double[Math.toIntExact(y)][Math.toIntExact(x)];
 
-        for (int i = 0; i < arraySize; i++) {
-            for (int j = 0; j < arraySize; j++) {
+        for (int i = 0; i < x; i++) {
+            for (int j = 0; j < y; j++) {
                 Random r = new Random();
                 double randomValue = rangeMin + (rangeMax - rangeMin) * r.nextDouble();
-                mat1[i][j] = mat2[i][j] = randomValue;
+                mat1[i][j] = mat2[j][i] = randomValue;
             }
         }
     }

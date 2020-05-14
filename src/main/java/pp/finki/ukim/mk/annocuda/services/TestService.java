@@ -5,7 +5,12 @@ public interface TestService {
 
     Object cpuMatrixMultiplication(double[][] vector1, double[][] vector2);
 
+    Object cpuReduce(double[] vector);
+
     Object gpuVectorSum(double[] vector1, double[] vector2);
 
     Object gpuMatrixMultiplication(double[][] vector1, double[][] vector2);
+
+    Object gpuReduce(double[] vector);
+
 }

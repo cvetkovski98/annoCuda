@@ -1,7 +1,7 @@
 extern "C"
 __global__
-void sumReduction(int *v, int *v_r) {
-    extern __shared__ int partial_sum[];
+void sumReduction(double *v, double *v_r) {
+    extern __shared__ double partial_sum[];
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
     partial_sum[threadIdx.x] = v[tid];

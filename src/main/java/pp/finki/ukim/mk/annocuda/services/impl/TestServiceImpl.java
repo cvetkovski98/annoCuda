@@ -34,6 +34,15 @@ public class TestServiceImpl implements TestService {
     }
 
     @Override
+    public Object cpuReduce(double[] vector){
+        double sum = 0;
+        for (double v : vector) {
+            sum += v;
+        }
+        return sum;
+    }
+
+    @Override
     @GPUAction(operationType = OperationType.DOT_PRODUCT)
     public Object gpuVectorSum(double[] vector1, double[] vector2) {
         return null;
@@ -42,6 +51,12 @@ public class TestServiceImpl implements TestService {
     @Override
     @GPUAction(operationType = OperationType.MATRIX_MUL)
     public Object gpuMatrixMultiplication(double[][] vector1, double[][] vector2) {
+        return null;
+    }
+
+    @Override
+    @GPUAction(operationType = OperationType.REDUCE)
+    public Object gpuReduce(double[] vector) {
         return null;
     }
 }

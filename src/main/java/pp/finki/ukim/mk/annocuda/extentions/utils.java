@@ -7,7 +7,7 @@ public class utils {
         int n = mat[0].length;
         double[] result = new double[m * n];
         for (int i = 0; i < m; i++) {
-            System.arraycopy(mat[i], 0, result, i * m, n);
+            System.arraycopy(mat[i], 0, result, i * n, n);
         }
         return result;
     }
@@ -15,7 +15,7 @@ public class utils {
     public static double[][] toMatrix(double[] array, int m, int n){
         double[][] result = new double[m][n];
         for (int i = 0; i < m; i++) {
-            if (n >= 0) System.arraycopy(array, i * m, result[i], 0, n);
+            if (n >= 0) System.arraycopy(array, i * n, result[i], 0, n);
         }
         return result;
     }
