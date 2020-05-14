@@ -6,6 +6,7 @@ import jcuda.driver.*;
 import jcuda.runtime.JCuda;
 import org.springframework.stereotype.Service;
 import pp.finki.ukim.mk.annocuda.enums.OperationType;
+import pp.finki.ukim.mk.annocuda.extentions.utils;
 import pp.finki.ukim.mk.annocuda.services.GPUService;
 
 import java.util.Arrays;
@@ -99,7 +100,7 @@ public class GPUServiceImpl implements GPUService {
         return Arrays.stream(vector1).sum();
     }
 
-    private double[] matrixMul(double[][] A, double[][] B) {
+    private double[][] matrixMul(double[][] A, double[][] B) {
         setExceptionsEnabled(true);
 
         // set context and get kernel function
@@ -119,14 +120,8 @@ public class GPUServiceImpl implements GPUService {
         JCuda.cudaMalloc(d_r, memSize);
 
         // put matrices in row major order
-        double[] vector1 = new double[(int) numberOfElements];
-        double[] vector2 = new double[(int) numberOfElements];
-        for (int i = 0; i < A.length; i++) {
-            for (int j = 0; j < A[0].length; j++) {
-                vector1[i * A.length + j] = A[i][j];
-                vector2[i * A.length + j] = B[i][j];
-            }
-        }
+        double[] vector1 = utils.toRowMajor(A);
+        double[] vector2 = utils.toRowMajor(B);
 
         // create host result array
         double[] result = new double[(int) numberOfElements];
@@ -143,10 +138,10 @@ public class GPUServiceImpl implements GPUService {
                 Pointer.to(new int[]{A.length})
         );
 
-        int blockSize = A.length;
-        int gridSize = (int) Math.ceil((double) numberOfElements / blockSize);
+        int blockSize = Math.min(A.length, 32);
+        int gridSize = (int) Math.ceil((double) A.length / blockSize);
         cuLaunchKernel(matrixMultiplicationKernel,
-                1, 1, 1,
+                gridSize, gridSize, 1,
                 blockSize, blockSize, 1,
                 0, null,
                 kernelParameters, null
@@ -158,7 +153,8 @@ public class GPUServiceImpl implements GPUService {
         cuMemFree(d_v1);
         cuMemFree(d_v2);
         cuMemFree(d_r);
-        return result;
+
+        return utils.toMatrix(result, A.length, B[0].length);
     }
 
     private int[] map(Object[] objects) {
