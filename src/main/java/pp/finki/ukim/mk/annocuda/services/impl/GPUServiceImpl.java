@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import pp.finki.ukim.mk.annocuda.enums.OperationType;
 import pp.finki.ukim.mk.annocuda.services.GPUService;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 import static jcuda.driver.JCudaDriver.*;
@@ -16,19 +15,17 @@ import static jcuda.driver.JCudaDriver.*;
 @Service
 public class GPUServiceImpl implements GPUService {
 
-    @Override
-    public CUcontext init() {
+    private final CUcontext context;
+
+    public GPUServiceImpl() {
         cuInit(0);
         CUdevice device = new CUdevice();
         cuDeviceGet(device, 0);
-        CUcontext context = new CUcontext();
-        cuCtxCreate(context, 0, device);
-        return context;
+        this.context = new CUcontext();
+        cuCtxCreate(this.context, 0, device);
     }
 
-    @Override
-    public CUfunction getKernel(String fileName, String functionName) {
-        setExceptionsEnabled(true);
+    private CUfunction getKernel(String fileName, String functionName) {
         CUmodule cUmodule = new CUmodule();
         String fullPath = this.getModulePath(fileName);
         cuModuleLoad(cUmodule, fullPath);
@@ -48,6 +45,15 @@ public class GPUServiceImpl implements GPUService {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                return null;
+            case MATRIX_MUL:
+                try {
+                    double[][] arr1 = (double[][]) args[0];
+                    double[][] arr2 = (double[][]) args[1];
+                    return matrixMul(arr1, arr2);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             case MAP:
                 return "MAP";
             case REDUCE:
@@ -57,16 +63,16 @@ public class GPUServiceImpl implements GPUService {
         }
     }
 
-    private double vectorAdd(double[] vector1, double[] vector2) throws IOException {
-        CUcontext thisContext = this.init();
-        System.out.println(this.getModulePath("vectorAdd.ptx"));
+    private Double vectorAdd(double[] vector1, double[] vector2) {
+        cuCtxSetCurrent(this.context);
         CUfunction vectorAddKernel = this.getKernel("vectorAdd.ptx", "add");
+
         long numberOfElements = vector1.length;
         long memSize = numberOfElements * Sizeof.DOUBLE;
         CUdeviceptr d_v1 = new CUdeviceptr();
         CUdeviceptr d_v2 = new CUdeviceptr();
         JCuda.cudaMalloc(d_v1, memSize);
-        JCuda.cudaMalloc(d_v2, numberOfElements * Sizeof.DOUBLE);
+        JCuda.cudaMalloc(d_v2, memSize);
         cuMemcpyHtoD(d_v1, Pointer.to(vector1), memSize);
         cuMemcpyHtoD(d_v2, Pointer.to(vector2), memSize);
 
@@ -76,7 +82,7 @@ public class GPUServiceImpl implements GPUService {
                 Pointer.to(d_v2)
         );
 
-        int blockSize = 512;
+        int blockSize = 1024;
         int gridSize = (int) Math.ceil((double) numberOfElements / blockSize);
         cuLaunchKernel(vectorAddKernel,
                 gridSize, 1, 1,
@@ -90,8 +96,69 @@ public class GPUServiceImpl implements GPUService {
 
         cuMemFree(d_v1);
         cuMemFree(d_v2);
-        cuCtxDestroy(thisContext);
         return Arrays.stream(vector1).sum();
+    }
+
+    private double[] matrixMul(double[][] A, double[][] B) {
+        setExceptionsEnabled(true);
+
+        // set context and get kernel function
+        cuCtxSetCurrent(this.context);
+        CUfunction matrixMultiplicationKernel = this.getKernel("matrixMul.ptx", "matrixMultiplicationKernel");
+
+        long numberOfElements = A.length * A[0].length;
+        long memSize = numberOfElements * Sizeof.DOUBLE;
+
+        // create and allocate device memory
+        CUdeviceptr d_v1 = new CUdeviceptr();
+        CUdeviceptr d_v2 = new CUdeviceptr();
+        CUdeviceptr d_r = new CUdeviceptr();
+
+        JCuda.cudaMalloc(d_v1, memSize);
+        JCuda.cudaMalloc(d_v2, memSize);
+        JCuda.cudaMalloc(d_r, memSize);
+
+        // put matrices in row major order
+        double[] vector1 = new double[(int) numberOfElements];
+        double[] vector2 = new double[(int) numberOfElements];
+        for (int i = 0; i < A.length; i++) {
+            for (int j = 0; j < A[0].length; j++) {
+                vector1[i * A.length + j] = A[i][j];
+                vector2[i * A.length + j] = B[i][j];
+            }
+        }
+
+        // create host result array
+        double[] result = new double[(int) numberOfElements];
+
+        // copy memory to device
+        cuMemcpyHtoD(d_v1, Pointer.to(vector1), memSize);
+        cuMemcpyHtoD(d_v2, Pointer.to(vector2), memSize);
+        cuMemcpyHtoD(d_r, Pointer.to(result), memSize);
+
+        Pointer kernelParameters = Pointer.to(
+                Pointer.to(d_v1),
+                Pointer.to(d_v2),
+                Pointer.to(d_r),
+                Pointer.to(new int[]{A.length})
+        );
+
+        int blockSize = A.length;
+        int gridSize = (int) Math.ceil((double) numberOfElements / blockSize);
+        cuLaunchKernel(matrixMultiplicationKernel,
+                1, 1, 1,
+                blockSize, blockSize, 1,
+                0, null,
+                kernelParameters, null
+        );
+        cuCtxSynchronize();
+
+        cuMemcpyDtoH(Pointer.to(result), d_r, memSize);
+
+        cuMemFree(d_v1);
+        cuMemFree(d_v2);
+        cuMemFree(d_r);
+        return result;
     }
 
     private int[] map(Object[] objects) {

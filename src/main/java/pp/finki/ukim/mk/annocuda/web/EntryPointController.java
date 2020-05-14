@@ -6,9 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pp.finki.ukim.mk.annocuda.annotations.GPUServiceProvider;
-import pp.finki.ukim.mk.annocuda.services.GPUService;
-import pp.finki.ukim.mk.annocuda.services.TestCpuService;
-import pp.finki.ukim.mk.annocuda.services.TestGpuService;
+import pp.finki.ukim.mk.annocuda.services.TestService;
 
 import java.io.IOException;
 import java.util.Random;
@@ -17,24 +15,19 @@ import java.util.Random;
 @RequestMapping(value = "/")
 public class EntryPointController {
 
-    private final TestGpuService testGpuService;
-    private final TestCpuService testCpuService;
+    private final TestService testService;
     double[] arr1 = null;
     double[] arr2 = null;
 
-    public EntryPointController(GPUServiceProvider gpuServiceProvider,
-                                TestGpuService testGpuService,
-                                TestCpuService testCpuService,
-                                GPUService gpuService) {
-        this.testCpuService = testCpuService;
-        this.testGpuService = gpuServiceProvider.bindWithGpuAnnotationProcessor(testGpuService, TestGpuService.class, gpuService);
+    public EntryPointController(GPUServiceProvider gpuServiceProvider, TestService testService) {
+        this.testService = gpuServiceProvider.bindWithGpuAnnotationProcessor(testService, TestService.class);
     }
 
     @GetMapping("/vectorAddCpu")
     public ResponseEntity<Object[]> vectorAddCpu(@RequestParam long arraySize) throws IOException {
         generateRandomArrays(arraySize);
         long t1 = System.currentTimeMillis();
-        Object p = testCpuService.vectorDotProduct(arr1, arr2);
+        Object p = testService.cpuVectorSum(arr1, arr2);
         long t2 = System.currentTimeMillis();
         long time = t2 - t1;
         return ResponseEntity.ok(new Object[]{p, time});
@@ -44,8 +37,43 @@ public class EntryPointController {
     public ResponseEntity<Object[]> vectorAddGpu(@RequestParam long arraySize) {
         generateRandomArrays(arraySize);
         long t1 = System.currentTimeMillis();
-        System.out.println(testGpuService);
-        Object p = testGpuService.sumTwoVectors(arr1, arr2);
+        Object p = testService.gpuVectorSum(arr1, arr2);
+        long t2 = System.currentTimeMillis();
+        long time = t2 - t1;
+        return ResponseEntity.ok(new Object[]{p, time});
+    }
+
+    @GetMapping("/matMulGpu")
+    public ResponseEntity<Object[]> matrixGpu() {
+        long t1 = System.currentTimeMillis();
+        int sz = 32;
+        double[][] test1 = new double[sz][sz];
+        double[][] test2 = new double[sz][sz];
+        for (int i = 0; i < sz; i++) {
+            for (int j = 0; j < sz; j++) {
+                test1[i][j] = 1;
+                test2[i][j] = 1;
+            }
+        }
+        Object p = testService.gpuMatrixMultiplication(test1, test2);
+        long t2 = System.currentTimeMillis();
+        long time = t2 - t1;
+        return ResponseEntity.ok(new Object[]{p, time});
+    }
+
+    @GetMapping("/matMulCpu")
+    public ResponseEntity<Object[]> matrixCpu() {
+        long t1 = System.currentTimeMillis();
+        int sz = 32;
+        double[][] test1 = new double[sz][sz];
+        double[][] test2 = new double[sz][sz];
+        for (int i = 0; i < sz; i++) {
+            for (int j = 0; j < sz; j++) {
+                test1[i][j] = 1;
+                test2[i][j] = 1;
+            }
+        }
+        Object p = testService.cpuMatrixMultiplication(test1, test2);
         long t2 = System.currentTimeMillis();
         long time = t2 - t1;
         return ResponseEntity.ok(new Object[]{p, time});
@@ -56,7 +84,7 @@ public class EntryPointController {
             return;
         }
         int rangeMin = 1;
-        int rangeMax = 2048;
+        int rangeMax = 10;
         arr1 = arr2 = new double[Math.toIntExact(arraySize)];
         for (int i = 0; i < arraySize; i++) {
             Random r = new Random();

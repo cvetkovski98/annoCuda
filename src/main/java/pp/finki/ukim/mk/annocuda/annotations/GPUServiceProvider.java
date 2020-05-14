@@ -8,8 +8,14 @@ import java.lang.reflect.Proxy;
 @Component
 public class GPUServiceProvider {
 
+    private final GPUService gpuService;
+
+    public GPUServiceProvider(GPUService gpuService) {
+        this.gpuService = gpuService;
+    }
+
     @SuppressWarnings("unchecked")
-    public <T> T bindWithGpuAnnotationProcessor(T _object, Class<?> _interface, GPUService gpuService) {
+    public <T> T bindWithGpuAnnotationProcessor(T _object, Class<?> _interface) {
         return (T) Proxy.newProxyInstance(
                 _object.getClass().getClassLoader(),
                 new Class[]{_interface},
