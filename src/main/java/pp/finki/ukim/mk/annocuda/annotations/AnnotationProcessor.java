@@ -18,10 +18,8 @@ public class AnnotationProcessor implements InvocationHandler {
     public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
         Method m = object.getClass().getMethod(method.getName(), method.getParameterTypes());
         if (m.isAnnotationPresent(GPUAction.class)) {
-            System.out.println("Executing " + m + " on GPU");
             return gpuService.execute(objects, m.getAnnotation(GPUAction.class).operationType());
         } else {
-            System.out.println("Executing " + m + " on CPU");
             return method.invoke(this.object, objects);
         }
     }

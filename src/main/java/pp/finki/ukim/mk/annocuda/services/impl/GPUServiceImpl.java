@@ -137,13 +137,13 @@ public class GPUServiceImpl implements GPUService {
                 Pointer.to(d_v1),
                 Pointer.to(d_v2),
                 Pointer.to(d_r),
-                Pointer.to(new int[]{A.length})
+                Pointer.to(new long[]{A.length})
         );
 
         int blockSizeX = Math.min(A.length, 32);
         int blockSizeY = Math.min(B[0].length, 32);
         int gridSizeX = (int) Math.ceil((double) A.length / blockSizeX);
-        int gridSizeY = (int) Math.ceil((double) A[0].length / blockSizeY);
+        int gridSizeY = (int) Math.ceil((double) B[0].length / blockSizeY);
 
         cuLaunchKernel(matrixMultiplicationKernel,
                 gridSizeX, gridSizeY, 1,

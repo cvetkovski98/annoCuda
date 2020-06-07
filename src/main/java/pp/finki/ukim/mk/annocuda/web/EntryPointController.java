@@ -48,7 +48,8 @@ public class EntryPointController {
         long t1 = System.currentTimeMillis();
         Object p = testService.gpuMatrixMultiplication(mat1, mat2);
         long time = System.currentTimeMillis() - t1;
-        return ResponseEntity.ok(new Object[]{time, p});
+        System.out.println(x*y + " " + time + " GPU");
+        return ResponseEntity.ok(new Object[]{x*y, time, "GPU"});
     }
 
     @GetMapping("/matMulCpu")
@@ -57,7 +58,8 @@ public class EntryPointController {
         long t1 = System.currentTimeMillis();
         Object p = testService.cpuMatrixMultiplication(mat1, mat2);
         long time = System.currentTimeMillis() - t1;
-        return ResponseEntity.ok(new Object[]{time});
+        System.out.println(x*y + " " + time + " CPU");
+        return ResponseEntity.ok(new Object[]{x*y, time, "CPU"});
     }
 
     @GetMapping("/reduceCpu")
